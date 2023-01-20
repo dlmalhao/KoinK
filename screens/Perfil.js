@@ -13,7 +13,7 @@ import { BlurView } from 'expo-blur';
 import { color } from '@rneui/base';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {LoggedUserContext} from '../src/LoggedUserContext';
-
+let bcrypt = require('bcryptjs');
 const ListTab = [
     {
         status: 'Inventário'
@@ -50,13 +50,13 @@ const Perfil = ({ navigation, route }) => {
     const {loggedUser, setLoggedUser} = useContext(LoggedUserContext);
     const [username, setUsername] = useState(null);
     const [email, setEmail] = useState(null);
+    const [password, setPassword] = useState(null);
     
     
     async function getLoggedUser() {
         setUsername(loggedUser.username)
         setEmail(loggedUser.email)
-            // console.log(loggedUser);
-
+        setPassword(loggedUser.password)    // console.log(loggedUser);
     }
 
 
@@ -64,9 +64,10 @@ const Perfil = ({ navigation, route }) => {
         // setDadosAtualizados({username:loggedUser.username, email:loggedUser.email});
         let token = await AsyncStorage.getItem('token');
 
+
         await axios.put(`https://koink-api.onrender.com/users/${loggedUser._id}`, {
             username: username,
-            email: email
+            email: email,
         }, {
             headers: {
                 'Accept': 'application/json',
@@ -264,7 +265,21 @@ const Perfil = ({ navigation, route }) => {
                                                 </View>
                                             </View> */}
                                         </ScrollView>
-
+                                        <ScrollView style={styles.containerAvatares}>
+                                            <View style={styles.avatares}>
+                                                {
+                                                    loggedUser.inventory.boosters.map((booster) => {
+                                                        return (
+                                                            // <Pressable key ={avatar._id} style={styles.avataresImage} onPress={()=> setAvatar(avatar.image)}>
+                                                            <Pressable key={booster._id} style={styles.avataresImage}>
+                                                                <SvgUri width='80' height='80' uri={booster.image} />
+                                                            </Pressable>
+                                                        )
+                                                    })
+                                                }
+                                            </View>
+                                        </ScrollView>    
+{/* 
                                         <ScrollView style={styles.containerBoosters}>
                                             <View style={styles.boosters}>
 
@@ -290,7 +305,7 @@ const Perfil = ({ navigation, route }) => {
                                                     <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
                                                 </View>
                                             </View>
-                                        </ScrollView>
+                                        </ScrollView> */}
                                     </Swiper>
 
 
@@ -313,7 +328,7 @@ const Perfil = ({ navigation, route }) => {
                                             <IconMaterial style={[styles.imageStyle]} name="pencil-outline" size={20} color="#000"></IconMaterial>
                                         </View>
                                         <View style={styles.inputTxt}>
-                                            <TextInput secureTextEntry={true} style={[{ flex: 1, color: '#000' }]}>{loggedUser.password}</TextInput>
+                                            <TextInput secureTextEntry={true} onChangeText={setPassword} value={password} style={[{ flex: 1, color: '#000' }]}></TextInput>
                                             <IconMaterial style={[styles.imageStyle]} name="pencil-outline" size={20} color="#000"></IconMaterial>
                                         </View>
                                     </View>

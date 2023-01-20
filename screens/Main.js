@@ -58,9 +58,14 @@ const Main = ({ navigation }) => {
                             <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
                         </View>
                     </View>
+                    <View style={styles.containerInfo}>
+                        <Pressable onPress={() => navigation.navigate('Onboarding1')}>
+                            <Icon name="information-outline" size={40} color="#FFFFFF" style={[styles.icon]}></Icon>
+                        </Pressable>    
+                    </View>
                     <View style={styles.containerAsteroid}>
                         <SvgUri style={styles.koink} uri="https://rapedolo.sirv.com/koink/koinkAcenar%202.svg" />
-                        <SvgUri style={styles.asteroid} width='100%' uri="https://rapedolo.sirv.com/koink/asteroid.svg" />
+                        <SvgUri style={styles.asteroid} width='100%' uri="https://rapedolo.sirv.com/koink/asteroid2.svg" />
                     </View>
                     <View style={styles.tabbar}>
                         <Pressable onPress={() => navigation.navigate('Minijogos')} style={styles.tabbar.minijogos}>
@@ -106,14 +111,13 @@ const styles = StyleSheet.create({
         height: '100%',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        paddingBottom: 120,
-        // backgroundColor: 'black'
+        paddingBottom: 150,
+        //backgroundColor: 'black'
     },
     koink: {
-
+        top:40
     },
     asteroid:{
-        bottom: 40
     },
 
     vidas: {
@@ -123,10 +127,14 @@ const styles = StyleSheet.create({
     vidaActive: {
         color: '#ff6600'
     },
-
-
-
-
+    containerInfo:{
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'flex-end',
+        paddingRight: 70,
+        marginTop: 15,
+        marginLeft: 30,
+    },
 
     barView: {
         position: 'absolute',

@@ -14,7 +14,7 @@ import {LoggedUserContext} from '../src/LoggedUserContext';
 
 
 
-export default function Quizz({ navigation }) {
+export default function Quizz2({ navigation }) {
 
     const [allQuestions, setallQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -31,7 +31,7 @@ export default function Quizz({ navigation }) {
     const { loggedUser, setLoggedUser } = useContext(LoggedUserContext);
 
     async function getQuestions() {
-        const response = await axios.get('https://koink-api.onrender.com/quizzes/63b9b959730884c90ce6ee59');
+        const response = await axios.get('https://koink-api.onrender.com/quizzes/63c9b24ff4fae54f17485920');
         if (response.status == 200) {
             setallQuestions(response.data.quizz.questions)
         }

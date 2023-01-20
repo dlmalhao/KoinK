@@ -9,7 +9,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import IconEntypo from 'react-native-vector-icons/Entypo';
 import IconMaterial from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from 'expo-blur';
-import {LoggedUserContext} from '../src/LoggedUserContext';
+import { LoggedUserContext } from '../src/LoggedUserContext';
 
 const ListTab = [
     {
@@ -22,11 +22,14 @@ const ListTab = [
 
 export default function Store({ navigation }) {
     const [tipo, setTipo] = useState('Avatares')
-    const [modalVisible, setModalVisible] = useState(false);
+    const [modalAvatar, setModalAvatar] = useState(false);
+    const [modalBooster, setModalBooster] = useState(false);
     const [modalComplete, setModalComplete] = useState(false);
     const [avatars, setAvatars] = useState(null);
+    const [boosters, setBoosters] = useState(null);
     const [activeAvatar, setActiveAvatar] = useState(null);
-    const {loggedUser, setLoggedUser} = useContext(LoggedUserContext);
+    const [activeBooster, setActiveBooster] = useState(null);
+    const { loggedUser, setLoggedUser } = useContext(LoggedUserContext);
 
 
     const setTipoFilter = tipo => {
@@ -41,12 +44,29 @@ export default function Store({ navigation }) {
         }
     }
 
-    async function renderModal(id) {
+    async function getBoosters() {
+        const response = await axios.get('https://koink-api.onrender.com/boosters');
+        if (response.status == 200) {
+            setBoosters(response.data.boosters)
+            //console.log(response.data.avatars);
+        }
+    }
+
+
+    async function renderModalAvatar(id) {
         const avatar = await axios.get(`https://koink-api.onrender.com/avatars/${id}`);
-        console.log(avatar.data);
+        //console.log(avatar.data);
         setActiveAvatar(avatar.data[0]);
 
-        setModalVisible(true);
+        setModalAvatar(true);
+    }
+
+    async function renderModalBooster(id) {
+        const booster = await axios.get(`https://koink-api.onrender.com/boosters/${id}`);
+        console.log(booster);
+        setActiveBooster(booster.data[0]);
+
+        setModalBooster(true);
     }
 
     async function buyAvatar(avatar) {
@@ -72,21 +92,50 @@ export default function Store({ navigation }) {
                 coins: loggedUser.coins - avatar.price
             }
         })
-        //console.log(loggedUser.coins);
-        //console.log(response.data);
-        setModalVisible(false);
+        setModalAvatar(false);
+        //setModalBooster(false);
+        setModalComplete(true)
+
+    }
+
+    async function buyBooster(booster) {
+        let token = await AsyncStorage.getItem('token');
+        await axios.put(`https://koink-api.onrender.com/users/${loggedUser._id}/boosters/${booster._id}`, {}, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        await axios.put(`https://koink-api.onrender.com/users/${loggedUser._id}`, {
+            coins: loggedUser.coins - booster.price
+        }, {
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        setLoggedUser((prevState) => {
+            return {
+                ...prevState,
+                boosters: prevState.inventory.boosters.push(booster),
+                coins: loggedUser.coins - booster.price
+            }
+        })
+        //setModalAvatar(false);
+        setModalBooster(false);
         setModalComplete(true)
 
     }
 
     useEffect(() => {
         getAvatars();
+        getBoosters();
     }, [loggedUser]);
 
     return (
         <SafeAreaView>
             {loggedUser && avatars &&
-                <SafeAreaView style={[styles.container, modalVisible === true && styles.containerBlur]}>
+                <SafeAreaView style={[styles.container, modalAvatar === true || modalBooster === true && styles.containerBlur]}>
                     <LinearGradient
                         colors={['#0075FF', '#0E41A6', '#430B89']}
                         style={styles.linearGradient}
@@ -124,7 +173,7 @@ export default function Store({ navigation }) {
                                                         <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
                                                     </View>
                                                     {loggedUser.level.number >= avatar.unlockedAt && loggedUser.coins >= avatar.price ?
-                                                        <Pressable style={styles.botaoComprar} onPress={() => renderModal(avatar._id)}>
+                                                        <Pressable style={styles.botaoComprar} onPress={() => renderModalAvatar(avatar._id)}>
                                                             <Text style={styles.botaoComprarTxt}>Comprar</Text>
                                                         </Pressable>
                                                         :
@@ -137,60 +186,6 @@ export default function Store({ navigation }) {
                                         })
                                     }
                                 </View>
-                                {/* <View style={styles.avatares}>
-                                <View style={styles.avatarInfo}>
-                                    <View style={styles.avataresImage}>
-                                        <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                    </View>
-                                    <View style={styles.avatarPreco}>
-                                        <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                        <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                    </View>
-                                    <Pressable style={styles.botaoComprar} onPress={() => setModalVisible(true)}>
-                                        <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                    </Pressable>
-                                </View>
-                                <View style={styles.avatarInfo}>
-                                    <View style={styles.avataresImage}>
-                                        <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                    </View>
-                                    <View style={styles.avatarPreco}>
-                                        <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                        <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                    </View>
-                                    <Pressable style={styles.botaoComprar}>
-                                        <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                    </Pressable>
-                                </View>
-
-                            </View>
-                            <View style={styles.avatares}>
-                                <View style={styles.avatarInfo}>
-                                    <View style={styles.avataresImage}>
-                                        <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                    </View>
-                                    <View style={styles.avatarPreco}>
-                                        <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                        <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                    </View>
-                                    <Pressable style={styles.botaoComprar}>
-                                        <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                    </Pressable>
-                                </View>
-                                <View style={styles.avatarInfo}>
-                                    <View style={styles.avataresImage}>
-                                        <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                    </View>
-                                    <View style={styles.avatarPreco}>
-                                        <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                        <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                    </View>
-                                    <Pressable style={styles.botaoComprar}>
-                                        <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                    </Pressable>
-                                </View>
-
-                            </View> */}
                             </View>
                         }
 
@@ -199,72 +194,100 @@ export default function Store({ navigation }) {
                         {tipo == 'Boosts' &&
                             <View style={{ marginBottom: 50 }}>
                                 <View style={styles.avatares}>
-                                    <View style={styles.avatarInfo}>
-                                        <View style={styles.avataresImage}>
-                                            <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                        </View>
-                                        <View style={styles.avatarPreco}>
-                                            <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                            <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                        </View>
-                                        <Pressable style={styles.botaoComprar}>
-                                            <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                        </Pressable>
-                                    </View>
-                                    <View style={styles.avatarInfo}>
-                                        <View style={styles.avataresImage}>
-                                            <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                        </View>
-                                        <View style={styles.avatarPreco}>
-                                            <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                            <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                        </View>
-                                        <Pressable style={styles.botaoComprar}>
-                                            <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                        </Pressable>
-                                    </View>
-
-                                </View>
-                                <View style={styles.avatares}>
-                                    <View style={styles.avatarInfo}>
-                                        <View style={styles.avataresImage}>
-                                            <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                        </View>
-                                        <View style={styles.avatarPreco}>
-                                            <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                            <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                        </View>
-                                        <Pressable style={styles.botaoComprar}>
-                                            <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                        </Pressable>
-                                    </View>
-                                    <View style={styles.avatarInfo}>
-                                        <View style={styles.avataresImage}>
-                                            <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
-                                        </View>
-                                        <View style={styles.avatarPreco}>
-                                            <Text style={styles.avatarPrecoTxt}>2.500</Text>
-                                            <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
-                                        </View>
-                                        <Pressable style={styles.botaoComprar}>
-                                            <Text style={styles.botaoComprarTxt}>Comprar</Text>
-                                        </Pressable>
-                                    </View>
-
+                                    {
+                                        boosters.map((booster) => {
+                                            return (
+                                                <View key={booster._id} style={styles.avatarInfo}>
+                                                    <View style={styles.avataresImage}>
+                                                        <SvgUri width='80' height='80' uri={booster.image} />
+                                                    </View>
+                                                    <View style={styles.avatarPreco}>
+                                                        <Text style={styles.avatarPrecoTxt}>{booster.price}</Text>
+                                                        <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
+                                                    </View>
+                                                    {loggedUser.level.number >= booster.unlockedAt && loggedUser.coins >= booster.price ?
+                                                        <Pressable style={styles.botaoComprar} onPress={() => renderModalBooster(booster._id)}>
+                                                            <Text style={styles.botaoComprarTxt}>Comprar</Text>
+                                                        </Pressable>
+                                                        :
+                                                        <Pressable style={styles.botaoBloqueado}>
+                                                            <Text style={styles.botaoBloqueado.text}>Bloqueado</Text>
+                                                        </Pressable>
+                                                    }
+                                                </View>
+                                            )
+                                        })
+                                    }
                                 </View>
                             </View>
+                            // <View style={{ marginBottom: 50 }}>
+                            //     <View style={styles.avatares}>
+                            //         <View style={styles.avatarInfo}>
+                            //             <View style={styles.avataresImage}>
+                            //                 <SvgUri width="800" height="800" uri="https://sonaligl.sirv.com/Images/boostCoins.svg" />
+                            //             </View>
+                            //             <View style={styles.avatarPreco}>
+                            //                 <Text style={styles.avatarPrecoTxt}>2.500</Text>
+                            //                 <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
+                            //             </View>
+                            //             <Pressable style={styles.botaoComprar}>
+                            //                 <Text style={styles.botaoComprarTxt}>Comprar</Text>
+                            //             </Pressable>
+                            //         </View>
+                            //         <View style={styles.avatarInfo}>
+                            //             <View style={styles.avataresImage}>
+                            //                 <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
+                            //             </View>
+                            //             <View style={styles.avatarPreco}>
+                            //                 <Text style={styles.avatarPrecoTxt}>2.500</Text>
+                            //                 <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
+                            //             </View>
+                            //             <Pressable style={styles.botaoComprar}>
+                            //                 <Text style={styles.botaoComprarTxt}>Comprar</Text>
+                            //             </Pressable>
+                            //         </View>
+
+                            //     </View>
+                            //     <View style={styles.avatares}>
+                            //         <View style={styles.avatarInfo}>
+                            //             <View style={styles.avataresImage}>
+                            //                 <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
+                            //             </View>
+                            //             <View style={styles.avatarPreco}>
+                            //                 <Text style={styles.avatarPrecoTxt}>2.500</Text>
+                            //                 <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
+                            //             </View>
+                            //             <Pressable style={styles.botaoComprar}>
+                            //                 <Text style={styles.botaoComprarTxt}>Comprar</Text>
+                            //             </Pressable>
+                            //         </View>
+                            //         <View style={styles.avatarInfo}>
+                            //             <View style={styles.avataresImage}>
+                            //                 <SvgUri width='80' height='80' uri="https://rapedolo.sirv.com/koink/KoinkIntelectual.svg" />
+                            //             </View>
+                            //             <View style={styles.avatarPreco}>
+                            //                 <Text style={styles.avatarPrecoTxt}>2.500</Text>
+                            //                 <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
+                            //             </View>
+                            //             <Pressable style={styles.botaoComprar}>
+                            //                 <Text style={styles.botaoComprarTxt}>Comprar</Text>
+                            //             </Pressable>
+                            //         </View>
+
+                            //     </View>
+                            // </View>
                         }
                     </ScrollView>
 
 
-                    {activeAvatar &&
+                    {activeAvatar && 
                         <Modal
                             animationType="slide"
-                            visible={modalVisible}
+                            visible={modalAvatar}
                             transparent={true}
                             onRequestClose={() => {
                                 Alert.alert("Modal has been closed.");
-                                setModalVisible(!modalVisible);
+                                setModalAvatar(!modalAvatar);
                             }}
                         >
                             <BlurView intensity={100} tint='dark' style={styles.containerModal}>
@@ -281,7 +304,7 @@ export default function Store({ navigation }) {
                                         <Pressable style={styles.botaoCompraFinal} onPress={() => buyAvatar(activeAvatar)}>
                                             <Text style={styles.botaoCompraFinalTxt}>Comprar</Text>
                                         </Pressable>
-                                        <Pressable style={styles.botaoCancelar} onPress={() => setModalVisible(false)}>
+                                        <Pressable style={styles.botaoCancelar} onPress={() => setModalAvatar(false)}>
                                             <Text style={styles.botaoCancelarTxt}>Cancelar</Text>
                                         </Pressable>
                                     </View>
@@ -289,6 +312,39 @@ export default function Store({ navigation }) {
                             </BlurView>
                         </Modal>
                     }
+
+                    {activeBooster && 
+                        <Modal
+                            animationType="slide"
+                            visible={modalBooster}
+                            transparent={true}
+                            onRequestClose={() => {
+                                Alert.alert("Modal has been closed.");
+                                setModalBooster(!modalBooster);
+                            }}
+                        >
+                            <BlurView intensity={100} tint='dark' style={styles.containerModal}>
+                                <View style={styles.modal}>
+                                    <View style={styles.avatarCompraInfo}>
+                                        <View style={styles.avataresCompraImage}>
+                                            <SvgUri width='120' height='120' uri={activeBooster.image} />
+                                        </View>
+                                        <Text style={styles.avatarCompraPrecoTxt}>{activeBooster.name}</Text>
+                                        <View style={styles.avatarCompraPreco}>
+                                            <Text style={styles.avatarCompraPrecoTxt}>{activeBooster.price}</Text>
+                                            <SvgUri style={{ marginRight: 10 }} width='21' height='21' uri="https://rapedolo.sirv.com/koink/coin.svg" />
+                                        </View>
+                                        <Pressable style={styles.botaoCompraFinal} onPress={() => buyBooster(activeBooster)}>
+                                            <Text style={styles.botaoCompraFinalTxt}>Comprar</Text>
+                                        </Pressable>
+                                        <Pressable style={styles.botaoCancelar} onPress={() => setModalBooster(false)}>
+                                            <Text style={styles.botaoCancelarTxt}>Cancelar</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </BlurView>
+                        </Modal>
+                    }   
 
                     {/* Modal sucesso de compra */}
                     <Modal
@@ -305,7 +361,7 @@ export default function Store({ navigation }) {
                                 <View style={{ marginVertical: 20 }}>
                                     <SvgUri width='150' height='150' uri='https://rapedolo.sirv.com/koink/koinkFestivo.svg' />
                                 </View>
-                                <Text style={styles.modalAvatarTxt}>Avatar comprado com sucesso!</Text>
+                                <Text style={styles.modalAvatarTxt}>Item comprado com sucesso!</Text>
                                 <TouchableNativeFeedback onPress={() => setModalComplete(false)}>
                                     <View style={[styles.buttonAvatarModal]}>
                                         <Text style={[styles.buttonAvatarModalTxt, { color: '#FFFFFF' }]}>Voltar</Text>
